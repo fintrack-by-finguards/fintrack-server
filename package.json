@@ -1,0 +1,19 @@
+{
+  "name": "fintrack-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/vision": "^4.0.2",
+    "fs": "^0.0.1-security",
+    "jimp": "^0.22.10",
+    "request": "^2.88.2",
+    "tesseract.js": "^5.0.3"
+  }
+}
