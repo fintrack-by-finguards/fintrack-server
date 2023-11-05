@@ -6,26 +6,48 @@ from base64 import b64encode
 from pytesseract import Output
 import numpy as np
 
+import cv2
+import numpy as np
+
 def get_skew_angle(cv_image) -> float:
     # Chuyển đổi sang grayscale
     gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-    # Phát hiện các cạnh trong ảnh
-    edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-    # Sử dụng Hough Transform để phát hiện đường thẳng trong ảnh
-    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=100, minLineLength=5, maxLineGap=20)
-
-    # Lọc các đường thẳng dựa trên góc để tính góc nghiêng
+    
+    # Áp dụng ngưỡng để tạo một hình ảnh nền trắng với các đối tượng màu đen
+    _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY_INV)
+    
+    # Tìm các đường viền
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # Lọc ra các đường viền lớn nhất (giả sử đường viền lớn nhất là của hoá đơn)
+    largest_contour = max(contours, key=cv2.contourArea) if contours else None
+    
+    # Sử dụng đường viền lớn nhất để tính toán góc nghiêng
     angles = []
-    if lines is not None:  # Check if any line was detected
-        for line in lines:
-            x1, y1, x2, y2 = line[0]
-            angle = np.arctan2(y2 - y1, x2 - x1) * (180 / np.pi)
+    if largest_contour is not None:
+        # Ứng dụng Hough Transform trên đường viền để phát hiện đường thẳng
+        rect = cv2.minAreaRect(largest_contour)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+
+        # Tính toán góc từ Hough Transform
+        for i in range(4):
+            p1 = box[i]
+            p2 = box[(i+1) % 4]
+            angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0]) * (180 / np.pi)
             angles.append(angle)
     else:
-        return 0  # No angle skew correction if no lines are detected
-
-    # Trả về góc nghiêng trung bình của ảnh
-    return np.median(angles)
+        return 0  # No angle skew correction if no contours are detected
+    
+    # Chỉnh sửa: lọc ra các góc mà chúng ta tin rằng chúng biểu diễn các viền của hoá đơn
+    # Ở đây ta giả định rằng hoá đơn có thể bị nghiêng từ -45 đến 45 độ
+    angles = [angle for angle in angles if -90 < angle < 90]
+    
+    if len(angles) == 0:
+        return 0  # Nếu không có góc nào phù hợp, không sửa góc nghiêng
+    
+    # Trả về góc trung bình
+    return np.mean(angles)
 
 def deskew(cv_image):
     angle = get_skew_angle(cv_image)
@@ -78,7 +100,7 @@ def four_point_transform(image, pts):
 
 
 # Đường dẫn đến ảnh cần phân tích
-image_path = './bill3.png'
+image_path = './bill6.jpg'
 
 # API Key của bạn
 api_key = 'AIzaSyDizBWdgr2GxKB3g7L3ZiiquLUHTwecRzc'
@@ -125,10 +147,13 @@ except NameError:
 custom_config = r'--oem 3 --psm 6'
 details = pytesseract.image_to_data(gray_image, output_type=Output.DICT, config=custom_config, lang='eng')
 
-padding = 8  # Thêm một đệm là 10 pixels cho mỗi phía của block text
+padding = 8  # Thêm một đệm là 8 pixels cho mỗi phía của block text
 
 # Lọc ra những dòng có chứa văn bản
 lines = set(details['line_num'])  # Lấy tập hợp các số dòng duy nhất
+
+# Tạo một bản sao của ảnh để vẽ viền các block text
+image_with_boxes = gray_image.copy()
 
 for line in lines:
     # Lấy các chỉ số của tất cả các phần tử trong dòng hiện tại
@@ -147,6 +172,9 @@ for line in lines:
 
         # Cắt khối văn bản từ ảnh gốc
         text_block = gray_image[y1:y2, x1:x2]
+
+        # Vẽ hình chữ nhật xung quanh block text trên ảnh ban đầu
+        cv2.rectangle(image_with_boxes, (x1, y1), (x2, y2), (0, 255, 0), 2)
         
         # Mã hóa khối văn bản thành base64 để gửi tới Google Vision API
         retval, buffer = cv2.imencode('.jpg', text_block)
@@ -176,15 +204,18 @@ for line in lines:
             # In ra văn bản được phát hiện
             text_result = response.json().get('responses', [{}])[0].get('fullTextAnnotation', {}).get('text', '')
             print(f'Block Line {line}:')
-            print(text_result)
+            print(text_result.split("\n"))
+            break
         else:
             print('Error:', response.text)
         
         # Hiển thị khối văn bản
-        cv2.imshow(f'Block Line {line}', text_block)
-        cv2.waitKey(0)
+        # cv2.imshow(f'Block Line {line}', text_block)
         
         # Lưu khối văn bản vào một file ảnh, nếu muốn
         # cv2.imwrite(f'block_line_{line}.jpg', text_block)
 
+# Hiển thị ảnh với các block text đã được vẽ viền
+cv2.imshow('Image with Text Boxes', image_with_boxes)
+cv2.waitKey(0)
 cv2.destroyAllWindows()
