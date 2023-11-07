@@ -25,6 +25,7 @@ class MongoDB:
         self.db = self.client[MongoDBConfig.DATABASE]
         self.user_collection = self.db[MongoDBConfig.USER_COLLECTION]
         self.spending_collection = self.db[MongoDBConfig.SPENDING_COLLECTION]
+        self.comment_collection = self.db[MongoDBConfig.COMMENT_COLLECTION]
         # self.fb = FireBase()
 
     # def create_user(self):
@@ -47,6 +48,17 @@ class MongoDB:
         data = self.user_collection.find_one({"username": username})
         return data
     
+    def create_feedback(self, img_url, username, point, data, description):
+        uuid = str(uuid4())
+        self.comment_collection.insert_one({
+            '_id': uuid,
+            'img_url': img_url,
+            'username': username,
+            'point': point,
+            'data': data,
+            'description': description
+        })
+        return "success"
 
     # def find_nonce_link(self, link):
     #     nonce = self.links_collection.count_documents({

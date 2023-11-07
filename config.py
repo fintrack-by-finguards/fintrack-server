@@ -12,3 +12,4 @@ class MongoDBConfig:
   DATABASE = os.environ.get("MONGO_DBS") or ""
   USER_COLLECTION = os.environ.get("MONGO_USER_COLLECTION") or ""
   SPENDING_COLLECTION = os.environ.get("MONGO_SPENDING_COLLECTION") or ""
+  COMMENT_COLLECTION = os.environ.get("MONGO_COMMENT_COLLECTION") or ""

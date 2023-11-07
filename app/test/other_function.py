@@ -1,7 +1,7 @@
 import cv2
 from matplotlib import pyplot as plt
-from app.text_detection.image_processing import main_process
-from app.text_detection.text_detection import main_detection
+from image_processing import main_process
+from text_detection import main_detection
 
 def plot_images(image): 
     processed_image = main_process(image)

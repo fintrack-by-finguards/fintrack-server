@@ -240,6 +240,19 @@ def extract_info(data):
                     total_payment_match = price_pattern.search(' '.join(data[total_payment_index + 1]))
                     if total_payment_match:
                         tong_tien = ' '.join(data[total_payment_index + 1])
+        else:
+            for idx, block in enumerate(data):
+                if total_payment_index == -1:
+                    block_text = ' '.join(block)  # Nối các phần tử trong block
+                    block_text_lower = block_text.lower()
+                    if "thanh toán" in block_text_lower:
+                        for price_pattern in price_patterns: 
+                            total_payment_match = price_pattern.search(data[total_payment_index][-1])
+                            if total_payment_match:
+                                tong_tien = data[total_payment_index][-1]
+                                break
+                else:
+                    break
 
         return {
             'Tên quán': ten_quan,
