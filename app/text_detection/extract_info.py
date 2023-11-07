@@ -263,6 +263,10 @@ def extract_info(data):
         }
     except:
         return {
-            'error': True
+            'Tên quán': "",
+            'Địa chỉ': "",
+            'Thời gian': "",
+            'Sản phẩm': [],
+            'Tổng tiền': ""
         }
 
