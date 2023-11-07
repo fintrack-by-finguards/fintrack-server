@@ -79,7 +79,7 @@ address_keywords = ['đường', 'phố', 'ngõ', 'nghách', 'hẻm',
 header_keywords = {
     'ghi_chu': ['ghi chú', 'mô tả', 'tên món', 'item', 'mặt hàng', 'description'],
     'so_luong': ['sl', 'số lượng', 'qty', 'quantity'],
-    'gia': ['giá', 'đơn giá', 'price', 'unit price'],
+    'gia': ['giá', 'đơn giá', 'price', 'unit price', 't. tiền'],
     'tong': ['tổng', 'thành tiền', 't tiền', 'total', 'subtotal']
 }
 
