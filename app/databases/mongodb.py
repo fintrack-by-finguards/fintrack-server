@@ -48,7 +48,7 @@ class MongoDB:
         data = self.user_collection.find_one({"username": username})
         return data
     
-    def create_feedback(self, img_url, username, point, data, description):
+    def create_feedback(self, img_url, username, point, data, comment):
         uuid = str(uuid4())
         self.comment_collection.insert_one({
             '_id': uuid,
@@ -56,9 +56,27 @@ class MongoDB:
             'username': username,
             'point': point,
             'data': data,
-            'description': description
+            'comment': comment
         })
         return "success"
+
+    def count_comments(self):
+        return self.comment_collection.count_documents({})
+    
+    def average_points_all_comments(self):
+        try:
+            cursor = self.comment_collection.find({})
+            total_point = 0
+            count = 0
+            for document in cursor:
+                total_point += int(document['point'])
+                count += 1
+
+            return total_point / count if count > 0 else 0
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return "false"  # If there's an error, return "false" (as per your code)
+
 
     # def find_nonce_link(self, link):
     #     nonce = self.links_collection.count_documents({
