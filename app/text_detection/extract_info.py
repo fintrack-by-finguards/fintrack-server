@@ -247,9 +247,9 @@ def extract_info(data):
                     block_text_lower = block_text.lower()
                     if "thanh toán" in block_text_lower:
                         for price_pattern in price_patterns: 
-                            total_payment_match = price_pattern.search(data[total_payment_index][-1])
+                            total_payment_match = price_pattern.search(data[idx][-1])
                             if total_payment_match:
-                                tong_tien = data[total_payment_index][-1]
+                                tong_tien = data[idx][-1]
                                 break
                 else:
                     break
