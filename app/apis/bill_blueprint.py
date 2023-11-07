@@ -17,6 +17,7 @@ async def base(request):
     image = cv2.imdecode(arr, -1)
     processed_image = main_process(image)
     text_result, detection_image = main_detection(processed_image)
+    print(text_result)
     res = extract_info(text_result)
     return json({
         "state": "sucesss",
