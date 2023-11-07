@@ -1,15 +1,15 @@
 import cv2
 from matplotlib import pyplot as plt
 from app.text_detection.image_processing import main_process
-from text_detection import main_detection
+from app.text_detection.text_detection import main_detection
 
-def plot_images(image_path): 
-    processed_image = main_process(image_path)
+def plot_images(image): 
+    processed_image = main_process(image)
     text_result, detection_image = main_detection(processed_image)
 
     print(text_result)
 
-    original_image = cv2.imread(image_path)
+    original_image = image
 
     # Chuyển đổi ảnh từ BGR sang RGB
     original_image_rgb = cv2.cvtColor(original_image, cv2.COLOR_BGR2RGB)

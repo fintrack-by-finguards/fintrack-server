@@ -89,131 +89,167 @@ import re
 from datetime import datetime
 
 def extract_info(data):
-    ten_quan = ""
-    dia_chi = ""
-    ngay = ""
-    gio = ""
-    tong_tien = 0
-    num_header = 0
-    menu_items = []
-    header_index = {}
-    header_line = -1
-    date_patterns = {
-        re.compile(r'\b\d{2}/\d{2}/\d{4}\b'): "%d/%m/%Y",
-        re.compile(r'\b\d{2}-\d{2}-\d{4}\b'): "%d-%m-%Y",
-        re.compile(r'\b\d{2}\.\d{2}\.\d{4}\b'): "%d.%m.%Y",
-        re.compile(r'\b\d{4}-\d{2}-\d{2}\b'): "%Y-%m-%d"
-    }
-    total_payment_index = -1
+    try:
+        ten_quan = ""
+        dia_chi = ""
+        ngay = ""
+        gio = ""
+        tong_tien = 0
+        num_header = 0
+        menu_items = []
+        header_index = {}
+        header_line = -1
+        date_patterns = {
+            re.compile(r'\b\d{2}/\d{2}/\d{4}\b'): "%d/%m/%Y",
+            re.compile(r'\b\d{2}-\d{2}-\d{4}\b'): "%d-%m-%Y",
+            re.compile(r'\b\d{2}\.\d{2}\.\d{4}\b'): "%d.%m.%Y",
+            re.compile(r'\b\d{4}-\d{2}-\d{2}\b'): "%Y-%m-%d"
+        }
+        total_payment_index = -1
 
-    time_pattern = re.compile(r'\b\d{2}:\d{2}\b')
-    # 2023-06-28
-    price_patterns = {
-        re.compile(r'\d+.\d+'),
-        re.compile(r'\d+,\d+')
-    }
+        time_pattern = re.compile(r'\b\d{2}:\d{2}\b')
+        # 2023-06-28
+        price_patterns = {
+            re.compile(r'\d+.\d+'),
+            re.compile(r'\d+,\d+')
+        }
 
-    for idx, block in enumerate(data):
-        block_text = ' '.join(block)  # Nối các phần tử trong block
-        block_text_lower = block_text.lower()
+        for idx, block in enumerate(data):
+            block_text = ' '.join(block)  # Nối các phần tử trong block
+            block_text_lower = block_text.lower()
 
-        # Xác định tên quán dựa trên một số tiêu chí nào đó
-        if len(block) == 1 and 10 < len(block_text) < 30 and ten_quan == "":
-            ten_quan = block_text
+            # Xác định tên quán dựa trên một số tiêu chí nào đó
+            if len(block) == 1 and 10 < len(block_text) < 30 and ten_quan == "":
+                ten_quan = block_text
 
-        # Tìm kiếm trong mỗi chuỗi của block
-        for text in block:
-            text_lower = text.lower()
-            if any(keyword in text_lower for keyword in address_keywords):
-                # Tìm từ khóa và loại bỏ "Địa chỉ" nếu nó xuất hiện
-                address_line = re.sub(r'^.*địa chỉ:\s*', '', text, flags=re.IGNORECASE).strip()
-                # Bây giờ address_line chứa chuỗi có từ khóa địa chỉ mà không có "Địa chỉ"
-                
-                # Kiểm tra xem chuỗi sau khi đã loại bỏ "Địa chỉ" có hợp lệ hay không
-                if address_line and not address_line.isspace():
-                    if(dia_chi == "") :
-                        dia_chi = address_line 
-                    else:
-                        dia_chi = dia_chi + " " + address_line
-                    break  # Chỉ lấy phần tử đầu tiên thoả mãn điều kiện
+            # Tìm kiếm trong mỗi chuỗi của block
+            for text in block:
+                text_lower = text.lower()
+                if any(keyword in text_lower for keyword in address_keywords):
+                    # Tìm từ khóa và loại bỏ "Địa chỉ" nếu nó xuất hiện
+                    address_line = re.sub(r'^.*địa chỉ:\s*', '', text, flags=re.IGNORECASE).strip()
+                    # Bây giờ address_line chứa chuỗi có từ khóa địa chỉ mà không có "Địa chỉ"
+                    
+                    # Kiểm tra xem chuỗi sau khi đã loại bỏ "Địa chỉ" có hợp lệ hay không
+                    if address_line and not address_line.isspace():
+                        if(dia_chi == "") :
+                            dia_chi = address_line 
+                        else:
+                            dia_chi = dia_chi + " " + address_line
+                        break  # Chỉ lấy phần tử đầu tiên thoả mãn điều kiện
 
-        
-        # Tìm kiếm và trích xuất ngày
-        for pattern, date_format in date_patterns.items():
-            match = pattern.search(block_text_lower)
-            if match:
-                # Chuyển đổi ngày về định dạng dd/mm/yyyy
-                date_obj = datetime.strptime(match.group(), date_format)
-                ngay = date_obj.strftime("%d/%m/%Y")
-                break 
-
-        # Tìm kiếm giờ theo biểu thức chính quy đã định nghĩa
-        time_match = time_pattern.search(block_text_lower)
-        if time_match:
-            gio = time_match.group()  # Lưu giá trị giờ
-
-        cur_header_index = {}
-        cur_num_header = 0
-        # Xác định vị trí của từng tiêu đề trong dòng tiêu đề
-        for header, variants in header_keywords.items():
-            for variant in variants:
-                if header in cur_header_index:
-                    break
-                # Tạo biểu thức chính quy cho từng biến thể, chú ý thêm \b để chỉ ranh giới từ
-                pattern = re.compile(r'\b' + re.escape(variant) + r'\b', re.IGNORECASE)
+            
+            # Tìm kiếm và trích xuất ngày
+            for pattern, date_format in date_patterns.items():
                 match = pattern.search(block_text_lower)
                 if match:
-                    for text_idx, text in enumerate(block):
-                        if(variant in text.lower()):
-                            cur_header_index[header] = text_idx
-                            cur_num_header += 1
-                            break
-        
-        if cur_num_header >= num_header:
-            header_index = cur_header_index
-            num_header = cur_num_header
-            header_line = idx
+                    # Chuyển đổi ngày về định dạng dd/mm/yyyy
+                    date_obj = datetime.strptime(match.group(), date_format)
+                    ngay = date_obj.strftime("%d/%m/%Y")
+                    break 
 
-        if any(keyword in block_text_lower for keyword in total_payment_keywords) and total_payment_index == -1:
-            total_payment_index = idx
+            # Tìm kiếm giờ theo biểu thức chính quy đã định nghĩa
+            time_match = time_pattern.search(block_text_lower)
+            if time_match:
+                gio = time_match.group()  # Lưu giá trị giờ
 
-    if ngay != "":
-        ngay = ngay + " " + gio
-    else:
-        ngay = gio
-
-    for i in range (header_line + 1, len(data)):
-        if(len(data[i]) >= num_header):
-            for price_pattern in price_patterns: 
-                if 'gia' in header_index:
-                    price_match = price_pattern.search(data[i][header_index['gia']])
-                    if price_match:
-                        menu_item = {}
-                        if 'ghi_chu' in header_index:
-                            menu_item['name'] = data[i][header_index['ghi_chu']]
-                        if 'so_luong' in header_index:
-                            menu_item['quantity'] = data[i][header_index['so_luong']]    
-                        menu_item['price'] = data[i][header_index['gia']]
-                        menu_items.append(menu_item)
+            cur_header_index = {}
+            cur_num_header = 0
+            # Xác định vị trí của từng tiêu đề trong dòng tiêu đề
+            for header, variants in header_keywords.items():
+                for variant in variants:
+                    if header in cur_header_index:
                         break
+                    # Tạo biểu thức chính quy cho từng biến thể, chú ý thêm \b để chỉ ranh giới từ
+                    pattern = re.compile(r'\b' + re.escape(variant) + r'\b', re.IGNORECASE)
+                    match = pattern.search(block_text_lower)
+                    if match:
+                        for text_idx, text in enumerate(block):
+                            if(variant in text.lower()):
+                                cur_header_index[header] = text_idx
+                                cur_num_header += 1
+                                break
+            
+            if cur_num_header >= num_header:
+                header_index = cur_header_index
+                num_header = cur_num_header
+                header_line = idx
 
-    print(total_payment_index) 
-    if(total_payment_index != -1):
-        if(len(data[total_payment_index]) > 1):
-            for price_pattern in price_patterns: 
-                total_payment_match = price_pattern.search(data[total_payment_index][-1])
-                if total_payment_match:
-                    tong_tien = data[total_payment_index][-1]
+            if any(keyword in block_text_lower for keyword in total_payment_keywords) and total_payment_index == -1:
+                total_payment_index = idx
+
+        if ngay != "":
+            ngay = ngay + " " + gio
         else:
-            for price_pattern in price_patterns: 
-                total_payment_match = price_pattern.search(' '.join(data[total_payment_index + 1]))
-                if total_payment_match:
-                    tong_tien = ' '.join(data[total_payment_index + 1])
+            ngay = gio
+        
+        type = 1
+        line_after_header = header_line + 1
+        if(len(data[line_after_header]) == 1):
+            type = 2
+        
+        if type == 1:
+            # type1
+            for i in range (header_line + 1, len(data)):
+                if(len(data[i]) >= num_header):
+                    for price_pattern in price_patterns: 
+                        if 'gia' in header_index:
+                            price_match = price_pattern.search(data[i][header_index['gia']])
+                            if price_match:
+                                menu_item = {}
+                                if 'ghi_chu' in header_index:
+                                    menu_item['name'] = data[i][header_index['ghi_chu']]
+                                if 'so_luong' in header_index:
+                                    menu_item['quantity'] = data[i][header_index['so_luong']]    
+                                menu_item['price'] = data[i][header_index['gia']]
+                                menu_items.append(menu_item)
+                                break
+        else:
+            for i in range(header_line + 1, len(data)):
+                if(len(data[i]) == 1):
+                    count = 2
+                    menu_item = {}
+                    menu_item['name'] = data[i][0]
+                    if 'gia' in header_index:
+                        menu_item['price'] = data[i+1][len(data[i+1]) - len(data[header_line]) + header_index['gia']]
+                    if 'so_luong' in header_index:
+                        menu_item['quantity'] = data[i+1][len(data[i+1]) - len(data[header_line]) + header_index['so_luong']]
+                    
+                    if i+2 != total_payment_index:
+                        for price_pattern in price_patterns: 
+                            discount_price_match = price_pattern.search(data[i+2][-1])
+                            if discount_price_match:
+                                menu_item['discount'] = data[i+2][-1]
+                                count += 1
+                                break
+                
+                    i += count
+                    menu_items.append(menu_item)
+                
+                else: 
+                    break
 
-    return {
-        'Tên Quán': ten_quan,
-        'Địa Chỉ': dia_chi,
-        'Thời gian': ngay,
-        'Menu': menu_items,
-        'Tổng tiền': tong_tien
-    }
+        if(total_payment_index != -1):
+            if(len(data[total_payment_index]) > 1):
+                for price_pattern in price_patterns: 
+                    total_payment_match = price_pattern.search(data[total_payment_index][-1])
+                    if total_payment_match:
+                        tong_tien = data[total_payment_index][-1]
+            else:
+                for price_pattern in price_patterns: 
+                    total_payment_match = price_pattern.search(' '.join(data[total_payment_index + 1]))
+                    if total_payment_match:
+                        tong_tien = ' '.join(data[total_payment_index + 1])
+
+        return {
+            'Tên quán': ten_quan,
+            'Địa chỉ': dia_chi,
+            'Thời gian': ngay,
+            'Sản phẩm': menu_items,
+            'Tổng tiền': tong_tien
+        }
+    except:
+        return {
+            'error': True
+        }
+

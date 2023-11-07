@@ -46,12 +46,12 @@ def deskew(cv_image):
     else:
         return cv_image  #
     
-def main_process(image_path):
+def main_process(image):
     # Đọc ảnh sử dụng OpenCV
-    image = cv2.imread(image_path)
-    if image is None:
-        print(f"Error: Unable to load image at {image_path}")
-        exit()
+    # image = cv2.imread(image_path)
+    # if image is None:
+    #     print(f"Error: Unable to load image at {image_path}")
+    #     exit()
 
     # Chuyển đổi sang grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
