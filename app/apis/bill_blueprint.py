@@ -24,6 +24,41 @@ async def base(request):
         "data": res
     })
     
+@bill_blueprint.route('/fake', methods={'POST'})
+async def base(request):
+    # req = urllib.request.urlopen(request.json['url'])
+    # arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
+    # image = cv2.imdecode(arr, -1)
+    # processed_image = main_process(image)
+    # text_result, detection_image = main_detection(processed_image)
+    # print(text_result)
+    # res = extract_info(text_result)
+    return json({
+        "state": "sucesss",
+        "data": {
+            'Tên quán': "Phê La - N04 - B1 - Thành Thái",
+            'Địa chỉ': "TP Hà Nội",
+            'Thời gian': "18/11/2023 14:00",
+            'Sản phẩm': [{
+                "name": "Phong Lan",
+                "quantity": "1",
+                "price": "54,000"
+            }, {
+                "name": "Matcha Coco Latte",
+                "quantity": "1",
+                "price": "58,909"
+            }, { 
+                "name": "Trân châu Phong Lan",
+                "quantity": "1",
+                "price": "9,818"
+            }, { 
+                "name": "Trân châu cốm",
+                "quantity": "1",
+                "price": "14,727"
+            }],
+            'Tổng tiền': "137,454"
+        }
+    })
 
 
 
