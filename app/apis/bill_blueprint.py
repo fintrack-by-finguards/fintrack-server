@@ -25,7 +25,7 @@ async def base(request):
     })
     
 @bill_blueprint.route('/fake', methods={'POST'})
-async def base(request):
+async def fake(request):
     # req = urllib.request.urlopen(request.json['url'])
     # arr = np.asarray(bytearray(req.read()), dtype=np.uint8)
     # image = cv2.imdecode(arr, -1)
