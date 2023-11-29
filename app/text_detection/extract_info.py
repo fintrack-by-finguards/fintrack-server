@@ -77,10 +77,10 @@ address_keywords = ['đường', 'phố', 'ngõ', 'nghách', 'hẻm',
                     'yên bái', 'yen bai',]
 
 header_keywords = {
-    'ghi_chu': ['ghi chú', 'mô tả', 'tên món', 'item', 'mặt hàng', 'description'],
+    'ghi_chu': ['ghi chú', 'mô tả', 'tên món', 'item', 'mặt hàng', 'description', 'item'],
     'so_luong': ['sl', 'số lượng', 'qty', 'quantity'],
-    'gia': ['giá', 'đơn giá', 'price', 'unit price', 't. tiền'],
-    'tong': ['tổng', 'thành tiền', 't tiền', 'total', 'subtotal']
+    'gia': ['giá', 'đơn giá', 'price', 'unit price', 't. tiền', 't.tiền', 'unitprice'],
+    'tong': ['tổng', 'thành tiền', 't tiền', 'total', 'subtotal', 'amount']
 }
 
 total_payment_keywords = ['tổng cộng', 'tổng tiền', 'tổng']
@@ -262,6 +262,7 @@ def extract_info(data):
             'Tổng tiền': tong_tien
         }
     except:
+        print("Error")
         return {
             'Tên quán': "",
             'Địa chỉ': "",

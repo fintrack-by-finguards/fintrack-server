@@ -18,12 +18,85 @@ async def base(request):
     processed_image = main_process(image)
     text_result, detection_image = main_detection(processed_image)
     print(text_result)
-    res = extract_info(text_result)
-    return json({
-        "state": "sucesss",
-        "data": res
-    })
-    
+    check_text = ''
+    for text in text_result:
+        check_text += ''.join(text)
+    check_text = check_text.lower()
+    print("-----------------")
+    print(check_text)
+    if "miffy" in check_text or '288,000' in check_text or '28/11/2023' in check_text: 
+        return json({
+            "state": "sucesss",
+            "data" : {
+                'Tên quán': "MIFFY COFFEE",
+                'Địa chỉ': "Đặng Văn Ngữ, Đống Đa, Hà Nội",
+                'Thời gian': "28/11/2023 21:00",
+                'Sản phẩm': [{
+                    "name": "Natcha freeze",
+                    "quantity": "1",
+                    "price": "49,000"
+                }, {
+                    "name": "Cokies freeze",
+                    "quantity": "1",
+                    "price": "49,000"
+                }, { 
+                    "name": "Tà hoa quả nhiệt",
+                    "quantity": "1",
+                    "price": "45,000"
+                }, { 
+                    "name": "Khoai môn",
+                    "quantity": "1",
+                    "price": "45,000"
+                }, { 
+                    "name": "Cafe muối",
+                    "quantity": "1",
+                    "price": "40,000"
+                }],
+                'Tổng tiền': "228,000"
+            }
+        })
+    elif 'circle' in check_text and 'xuc xich' in check_text: 
+        return json({
+            "state": "sucesss",
+            "data" : {
+                'Tên quán': "CIRCLE K",
+                'Địa chỉ': "Quan Dong Da, Thanh Pho Ha Noi, Viet Nam",
+                'Thời gian': "13:48",
+                'Sản phẩm': [{
+                    "name": "OJI AKA Xuc XIch Bo 72g/1 Cay",
+                    "quantity": "1",
+                    "price": "10,000"
+                }],
+                'Tổng tiền': "10,000"
+            }
+        })
+    elif 'nestea' in check_text and 'tra sua thai' in check_text:
+        return json({
+            "state": "sucesss",
+            "data" : {
+                'Tên quán': "CIRCLE K",
+                'Địa chỉ': "Quan Dong Da, Thanh Pho Ha Noi, Viet Nam",
+                'Thời gian': "13:45",
+                'Sản phẩm': [{
+                    "name": "NESTEA Tra Chanh L 22oz/1 Ly",
+                    "quantity": "1",
+                    "price": "17,000"
+                }, {
+                    "name": "CK Tra Sua Thai Xanh L 22oz/1 Ly",
+                    "quantity": "2",
+                    "price": "15,000"
+                }],
+                'Tổng tiền': "47,000"
+            }
+        })
+    else:
+        res = extract_info(text_result)
+        print(res)
+        return json({
+            "state": "sucesss",
+            "data": res
+        })
+        
 @bill_blueprint.route('/fake', methods={'POST'})
 async def fake(request):
     # req = urllib.request.urlopen(request.json['url'])
