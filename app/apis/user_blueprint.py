@@ -16,10 +16,8 @@ async def base(request):
 @user_blueprint.route('/create', methods={'POST'})
 async def create_user(request):
     try :
-        res = _db.create_user(request.json['username'], request.json['password'], request.json['name'])
-        return json({
-            'status': res,
-        })
+        res = _db.create_user(request.json['username'], request.json['password'], request.json['name'], request.json['birthday'], request.json['job'], request.json['university'])
+        return res
     except:
         return json({
             'status': 'false',

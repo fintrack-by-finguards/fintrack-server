@@ -13,3 +13,4 @@ class MongoDBConfig:
   USER_COLLECTION = os.environ.get("MONGO_USER_COLLECTION") or ""
   SPENDING_COLLECTION = os.environ.get("MONGO_SPENDING_COLLECTION") or ""
   COMMENT_COLLECTION = os.environ.get("MONGO_COMMENT_COLLECTION") or ""
+  ASSETS_COLLECTION = os.environ.get("MONGO_ASSETS_COLLECTION") or ""
