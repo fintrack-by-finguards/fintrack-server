@@ -50,6 +50,7 @@ class MongoDB:
         self.spending_collection = self.db[MongoDBConfig.SPENDING_COLLECTION]
         self.comment_collection = self.db[MongoDBConfig.COMMENT_COLLECTION]
         self.assets_collection = self.db[MongoDBConfig.ASSETS_COLLECTION]
+        self.transactions_collection = self.db[MongoDBConfig.TRANSACTIONS_COLLECTION]
         # self.fb = FireBase()
         
     def create_user(self, username, password, name, birthday, job, university):
@@ -112,7 +113,6 @@ class MongoDB:
         return data
     
     def get_user_assets_specific(self, username, day, month, year):
-        print(1)
         try: 
             data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             if data:
@@ -172,4 +172,145 @@ class MongoDB:
         except Exception as e:
             print(f"An error occurred: {e}")
             return "false"  # If there's an error, return "false" (as per your code)
+        
+# transactions
+    def get_user_transactions(self, username):
+        data = self.transactions_collection.find_one({"username": username})
+        return data
+    
+    def get_user_transactions_specific(self, username, day, month, year):
+        try: 
+            data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            if data:
+                return data
+            else:
+                uuid = str(uuid4())
+                self.transactions_collection.insert_one({
+                    '_id': uuid,
+                    'username': username,
+                    "day": day, 
+                    "month": month, 
+                    "year": year,
+                    "history": []
+                })
+                return self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+    
+    def get_user_transactions_specific_month_year(self, username, month, year):
+        try: 
+            data = self.transactions_collection.find({"username": username, "month": month, "year": year})
+            if data:
+                res = []
+                for docs in data:
+                    res.append(docs)
+                return res
+            else:
+                return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
 
+    def add_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type):
+        try: 
+            data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            if data:
+                data["history"].append({
+                    "name": name,
+                    "category1": category1,
+                    "category2": category2,
+                    "money": money,
+                    "hour": hour,
+                    "minute": minute,
+                    "second": second,
+                    "type": _type
+                })
+                self.transactions_collection.update_one({"username": username, "day": day, "month": month, "year": year}
+                                                  , {"$set": { "history": data["history"] }})
+            else: 
+                uuid = str(uuid4())
+                self.transactions_collection.insert_one({
+                    '_id': uuid,
+                    'username': username,
+                    "day": day, 
+                    "month": month, 
+                    "year": year,
+                    "history": [{
+                        "name": name,
+                        "category1": category1,
+                        "category2": category2,
+                        "money": money,
+                        "hour": hour,
+                        "minute": minute,
+                        "second": second,
+                        "type": _type
+                    }]
+                }) 
+            return self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        
+    
+    def update_transaction (self, username, day, month, year, 
+                            name, category1, category2, money, 
+                            hour, minute, second, _type,
+                            new_name, new_category1, new_category2, new_money,
+                            new_hour, new_minute, new_second, new_type):
+        try: 
+            data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            print(data)
+            if data:
+                for i in range(0, len(data["history"])):
+                    if (data["history"][i]["name"] == name and data["history"][i]["category1"] == category1 and
+                    data["history"][i]["category2"] == category2 and data["history"][i]["money"] == money and 
+                    data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
+                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type):
+                        
+                        data["history"][i] = {
+                            "name": new_name,
+                            "category1": new_category1,
+                            "category2": new_category2,
+                            "money": new_money,
+                            "hour": new_hour,
+                            "minute": new_minute,
+                            "second": new_second,
+                            "type": new_type
+                        }
+                self.transactions_collection.update_one({"username": username, "day": day, "month": month, "year": year}
+                                                  , {"$set": { "history": data["history"] }})
+            else: 
+                return None
+            return self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        
+    def delete_transaction (self, username, day, month, year, 
+                            name, category1, category2, money, 
+                            hour, minute, second, _type):
+        try: 
+            data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            print(data)
+            if data:
+                for i in range(len(data["history"]) - 1, -1, -1):
+                    if (data["history"][i]["name"] == name and data["history"][i]["category1"] == category1 and
+                    data["history"][i]["category2"] == category2 and data["history"][i]["money"] == money and 
+                    data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
+                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type):
+                        
+                        data["history"].pop(i)
+
+                self.transactions_collection.update_one({"username": username, "day": day, "month": month, "year": year}
+                                                  , {"$set": { "history": data["history"] }})
+            else: 
+                return None
+            return self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        
