@@ -9,6 +9,10 @@ from matplotlib import dates as mpl_dates
 from app.firebase.firebase import FireBase
 from sanic.response import json
 
+assetsCate = ["Tiền mặt", "Tiền gửi ngân hàng", "Cho vay", "Đầu tư", "Bất động sản"]
+
+debtCate = ["Tiền mặt", "Trả góp", "Thế chấp", "Thấu chi"]
+
 day_in_month = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 def get_previous_day(data):
     if data["day"] > 1:
@@ -131,6 +135,7 @@ class MongoDB:
                         "year": year,
                         "assets": previous_day_data["assets"],
                         "debt": previous_day_data["debt"],
+                        "history": []
                     })
 
                     return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
@@ -144,13 +149,131 @@ class MongoDB:
                         "year": year,
                         "assets": [0, 0, 0, 0, 0],
                         "debt": [0, 0, 0, 0],
+                        "history": []
                     })
                     return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+                
                 
         except Exception as e:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
+        
+    def get_user_assets_specific_month_year(self, username, month, year):
+        try: 
+            data = self.assets_collection.find({"username": username, "month": month, "year": year})
+            if data:
+                res = []
+                for docs in data:
+                    res.append(docs)
+                return res
+            else:
+                return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
     
+    def add_assets_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type):
+        try: 
+            data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            if data:
+                if(_type == 0) :
+                    if category1 == "Tài sản":
+                        data["assets"][assetsCate.index(category2)] += money
+                    else:
+                        data["debt"][assetsCate.index(category2)] += money
+                else:
+                    if category1 == "Tài sản":
+                        data["assets"][assetsCate.index(category2)] -= money
+                    else:
+                        data["debt"][assetsCate.index(category2)] -= money
+                
+                print(data)
+
+                data["history"].append({
+                    "name": name,
+                    "category1": category1,
+                    "category2": category2,
+                    "money": money,
+                    "hour": hour,
+                    "minute": minute,
+                    "second": second,
+                    "type": _type,
+
+                })
+                self.assets_collection.update_one({"username": username, "day": day, "month": month, "year": year}
+                                                  , {"$set": { "assets": data["assets"], "debt": data["debt"], "history": data["history"] }})
+            else: 
+                assetsData = [0, 0, 0, 0, 0]
+                debtData = [0, 0, 0, 0, 0]
+
+                if(_type == 0) :
+                    if category1 == "Tài sản":
+                        assetsData[assetsCate.index(category2)] += money
+                    else:
+                        assetsData[debtCate.index(category2)] += money
+                else:
+                    if category1 == "Tài sản":
+                        debtData[assetsCate.index(category2)] -= money
+                    else:
+                        debtData[debtCate.index(category2)] -= money
+
+                uuid = str(uuid4())
+                self.assets_collection.insert_one({
+                    '_id': uuid,
+                    'username': username,
+                    "day": day, 
+                    "month": month, 
+                    "year": year,
+                    "assets": assetsData,
+                    "debt": debtData,
+                    "history": [{
+                        "name": name,
+                        "category1": category1,
+                        "category2": category2,
+                        "money": money,
+                        "hour": hour,
+                        "minute": minute,
+                        "second": second,
+                        "type": _type,
+                    }]
+                }) 
+            return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+    
+    def delete_assets_transaction (self, username, day, month, year, 
+                            name, money, hour, minute, second):
+        try: 
+            data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            if data:
+                for i in range(len(data["history"]) - 1, -1, -1):
+                    if (data["history"][i]["name"] == name and data["history"][i]["money"] == money and 
+                    data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
+                    data["history"][i]["second"] == second):
+                        if(data["history"][i]["type"] == 0) :
+                            if data["history"][i]["category1"] == "Tài sản":
+                                data["assets"][assetsCate.index(data["history"][i]["category2"])] -= data["history"][i]["money"]
+                            else:
+                                data["debt"][debtCate.index(data["history"][i]["category2"])] -= data["history"][i]["money"]
+                        else:
+                            if data["history"][i]["category1"] == "Tài sản":
+                                data["assets"][assetsCate.index(data["history"][i]["category2"])] += data["history"][i]["money"]
+                            else:
+                                data["debt"][debtCate.index(data["history"][i]["category2"])] += data["history"][i]["money"] 
+                        data["history"].pop(i)
+
+                self.assets_collection.update_one({"username": username, "day": day, "month": month, "year": year}
+                                                  , {"$set": { "history": data["history"], "assets": data["assets"], "debt": data["debt"] }})
+            else: 
+                return None
+            return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        
     def update_user_assets(self, username, day, month, year, assets, debt):
         try : 
             data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
@@ -212,7 +335,7 @@ class MongoDB:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
 
-    def add_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type):
+    def add_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type, moneytype):
         try: 
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             if data:
@@ -224,7 +347,8 @@ class MongoDB:
                     "hour": hour,
                     "minute": minute,
                     "second": second,
-                    "type": _type
+                    "type": _type,
+                    "moneytype": moneytype
                 })
                 self.transactions_collection.update_one({"username": username, "day": day, "month": month, "year": year}
                                                   , {"$set": { "history": data["history"] }})
@@ -244,7 +368,8 @@ class MongoDB:
                         "hour": hour,
                         "minute": minute,
                         "second": second,
-                        "type": _type
+                        "type": _type, 
+                        "moneytype": moneytype
                     }]
                 }) 
             return self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
@@ -256,9 +381,9 @@ class MongoDB:
     
     def update_transaction (self, username, day, month, year, 
                             name, category1, category2, money, 
-                            hour, minute, second, _type,
+                            hour, minute, second, _type, moneytype,
                             new_name, new_category1, new_category2, new_money,
-                            new_hour, new_minute, new_second, new_type):
+                            new_hour, new_minute, new_second, new_type, new_moneytype):
         try: 
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             print(data)
@@ -267,7 +392,8 @@ class MongoDB:
                     if (data["history"][i]["name"] == name and data["history"][i]["category1"] == category1 and
                     data["history"][i]["category2"] == category2 and data["history"][i]["money"] == money and 
                     data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
-                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type):
+                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type and 
+                    data["history"][i]["moneytype"] == moneytype):
                         
                         data["history"][i] = {
                             "name": new_name,
@@ -277,7 +403,8 @@ class MongoDB:
                             "hour": new_hour,
                             "minute": new_minute,
                             "second": new_second,
-                            "type": new_type
+                            "type": new_type,
+                            "moneytype": new_moneytype
                         }
                 self.transactions_collection.update_one({"username": username, "day": day, "month": month, "year": year}
                                                   , {"$set": { "history": data["history"] }})
@@ -291,7 +418,7 @@ class MongoDB:
         
     def delete_transaction (self, username, day, month, year, 
                             name, category1, category2, money, 
-                            hour, minute, second, _type):
+                            hour, minute, second, _type, moneytype):
         try: 
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             print(data)
@@ -300,7 +427,8 @@ class MongoDB:
                     if (data["history"][i]["name"] == name and data["history"][i]["category1"] == category1 and
                     data["history"][i]["category2"] == category2 and data["history"][i]["money"] == money and 
                     data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
-                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type):
+                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type and
+                    data["history"][i]["moneytype"] == moneytype):
                         
                         data["history"].pop(i)
 

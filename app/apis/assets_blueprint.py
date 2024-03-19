@@ -54,4 +54,53 @@ async def get_user_assets_specific(request):
             'data': None
         })
     
+@assets_blueprint.route('/getMonthYear', methods={'POST'})
+async def get_user_assets_specific_month_year(request):
+    try :
+        data = _db.get_user_assets_specific_month_year(request.json['username'], request.json['month'], request.json['year'])
+        return json({
+            'status': 'success',
+            'data': data
+        })
+    except:
+        return json({
+            'status': 'false',
+            'data': None
+        })
     
+@assets_blueprint.route('/add', methods={'POST'})
+async def add_assets_transaction(request):
+    try :
+        data = _db.add_assets_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
+                                   request.json['name'], request.json['category1'], request.json['category2'], request.json['money'],
+                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'])
+        
+
+        return json({
+            'status': 'success',
+            'data': data
+        })
+    except:
+        return json({
+            'status': 'false',
+            'data': None
+        })
+    
+@assets_blueprint.route('/delete', methods={'POST'})
+async def delete_assets_transaction(request):
+    try :
+        data = _db.delete_assets_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
+                                   request.json['name'], request.json['money'], request.json['hour'], request.json['minute'], request.json['second'])
+        
+
+        return json({
+            'status': 'success',
+            'data': data
+        })
+    except:
+        return json({
+            'status': 'false',
+            'data': None
+        })
+
+

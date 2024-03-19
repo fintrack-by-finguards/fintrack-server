@@ -46,7 +46,7 @@ async def add_transaction(request):
     try :
         data = _db.add_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
                                    request.json['name'], request.json['category1'], request.json['category2'], request.json['money'],
-                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'],)
+                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'], request.json['moneytype'])
         return json({
             'status': 'success',
             'data': data
@@ -62,9 +62,9 @@ async def update_transaction(request):
     try :
         data = _db.update_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
                                    request.json['name'], request.json['category1'], request.json['category2'], request.json['money'],
-                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'],
+                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'],  request.json['moneytype'],
                                    request.json['new_name'], request.json['new_category1'], request.json['new_category2'], request.json['new_money'],
-                                   request.json['new_hour'], request.json['new_minute'], request.json['new_second'], request.json['new_type'])
+                                   request.json['new_hour'], request.json['new_minute'], request.json['new_second'], request.json['new_type'],  request.json['new_moneytype'])
         return json({
             'status': 'success',
             'data': data
@@ -80,7 +80,7 @@ async def delete_transaction(request):
     try :
         data = _db.delete_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
                                    request.json['name'], request.json['category1'], request.json['category2'], request.json['money'],
-                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'])
+                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'],  request.json['moneytype'])
         return json({
             'status': 'success',
             'data': data
