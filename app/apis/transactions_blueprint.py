@@ -49,7 +49,8 @@ async def add_transaction(request):
                                    request.json['hour'], request.json['minute'], request.json['second'], request.json['type'], request.json['moneytype'])
         return json({
             'status': 'success',
-            'data': data
+            'data': data["data"],
+            'tran_id': data["tran_id"]
         })
     except:
         return json({

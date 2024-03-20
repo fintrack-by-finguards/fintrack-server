@@ -174,9 +174,10 @@ class MongoDB:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
     
-    def add_assets_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type):
+    def add_assets_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type, tran_id):
         try: 
             data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            tran_uuid = str(uuid4())
             if data:
                 if(_type == 0) :
                     if category1 == "Tài sản":
@@ -188,10 +189,10 @@ class MongoDB:
                         data["assets"][assetsCate.index(category2)] -= money
                     else:
                         data["debt"][assetsCate.index(category2)] -= money
-                
-                print(data)
 
                 data["history"].append({
+                    "parent_id": tran_id,
+                    "tran_id": tran_uuid,
                     "name": name,
                     "category1": category1,
                     "category2": category2,
@@ -200,7 +201,6 @@ class MongoDB:
                     "minute": minute,
                     "second": second,
                     "type": _type,
-
                 })
                 self.assets_collection.update_one({"username": username, "day": day, "month": month, "year": year}
                                                   , {"$set": { "assets": data["assets"], "debt": data["debt"], "history": data["history"] }})
@@ -229,6 +229,8 @@ class MongoDB:
                     "assets": assetsData,
                     "debt": debtData,
                     "history": [{
+                        "parent_id": tran_id,
+                        "tran_id": tran_uuid,
                         "name": name,
                         "category1": category1,
                         "category2": category2,
@@ -245,15 +247,12 @@ class MongoDB:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
     
-    def delete_assets_transaction (self, username, day, month, year, 
-                            name, money, hour, minute, second):
+    def delete_assets_transaction (self, username, day, month, year, parent_id):
         try: 
             data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             if data:
                 for i in range(len(data["history"]) - 1, -1, -1):
-                    if (data["history"][i]["name"] == name and data["history"][i]["money"] == money and 
-                    data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
-                    data["history"][i]["second"] == second):
+                    if (data["history"][i]["parent_id"] == parent_id):
                         if(data["history"][i]["type"] == 0) :
                             if data["history"][i]["category1"] == "Tài sản":
                                 data["assets"][assetsCate.index(data["history"][i]["category2"])] -= data["history"][i]["money"]
@@ -356,9 +355,9 @@ class MongoDB:
                 })
                 self.transactions_collection.update_one({"username": username, "day": day, "month": month, "year": year}
                                                   , {"$set": { "history": data["history"] }})
+                
             else: 
                 uuid = str(uuid4())
-                tran_uuid = str(uuid4())
                 self.transactions_collection.insert_one({
                     '_id': uuid,
                     'username': username,
@@ -378,7 +377,7 @@ class MongoDB:
                         "moneytype": moneytype
                     }]
                 }) 
-            return self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            return {"data": self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year}), "tran_id": tran_uuid}
 
         except Exception as e:
             print(f"An error occurred: {e}")

@@ -73,7 +73,7 @@ async def add_assets_transaction(request):
     try :
         data = _db.add_assets_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
                                    request.json['name'], request.json['category1'], request.json['category2'], request.json['money'],
-                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'])
+                                   request.json['hour'], request.json['minute'], request.json['second'], request.json['type'], request.json['tran_id'])
         
 
         return json({
@@ -89,9 +89,7 @@ async def add_assets_transaction(request):
 @assets_blueprint.route('/delete', methods={'POST'})
 async def delete_assets_transaction(request):
     try :
-        data = _db.delete_assets_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], 
-                                   request.json['name'], request.json['money'], request.json['hour'], request.json['minute'], request.json['second'])
-        
+        data = _db.delete_assets_transaction(request.json['username'], request.json['day'], request.json['month'], request.json['year'], request.json['parent_id'])
 
         return json({
             'status': 'success',
