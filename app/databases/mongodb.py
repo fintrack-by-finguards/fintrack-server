@@ -55,6 +55,7 @@ class MongoDB:
         self.comment_collection = self.db[MongoDBConfig.COMMENT_COLLECTION]
         self.assets_collection = self.db[MongoDBConfig.ASSETS_COLLECTION]
         self.transactions_collection = self.db[MongoDBConfig.TRANSACTIONS_COLLECTION]
+        self.goals_collection = self.db[MongoDBConfig.GOALS_COLLECTION]
         # self.fb = FireBase()
         
     def create_user(self, username, password, name, birthday, job, university):
@@ -124,6 +125,7 @@ class MongoDB:
             else: 
                 uuid = str(uuid4())
                 previous_day = get_previous_day({"day": day, "month": month, "year": year})
+                print(previous_day)
                 previous_day_data = self.assets_collection.find_one({"username": username, "day": previous_day["day"], 
                                                                      "month": previous_day["month"], "year": previous_day["year"]})
                 if previous_day_data:
@@ -338,8 +340,10 @@ class MongoDB:
     def add_transaction(self, username, day, month, year, name, category1, category2, money, hour, minute, second, _type, moneytype):
         try: 
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+            tran_uuid = str(uuid4())
             if data:
                 data["history"].append({
+                    "tran_id": tran_uuid,
                     "name": name,
                     "category1": category1,
                     "category2": category2,
@@ -354,6 +358,7 @@ class MongoDB:
                                                   , {"$set": { "history": data["history"] }})
             else: 
                 uuid = str(uuid4())
+                tran_uuid = str(uuid4())
                 self.transactions_collection.insert_one({
                     '_id': uuid,
                     'username': username,
@@ -361,6 +366,7 @@ class MongoDB:
                     "month": month, 
                     "year": year,
                     "history": [{
+                        "tran_id": tran_uuid,
                         "name": name,
                         "category1": category1,
                         "category2": category2,
@@ -379,23 +385,18 @@ class MongoDB:
             return None  # If there's an error, return "false" (as per your code)
         
     
-    def update_transaction (self, username, day, month, year, 
-                            name, category1, category2, money, 
-                            hour, minute, second, _type, moneytype,
+    def update_transaction (self, username, day, month, year, tran_id,
                             new_name, new_category1, new_category2, new_money,
                             new_hour, new_minute, new_second, new_type, new_moneytype):
         try: 
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
-            print(data)
             if data:
                 for i in range(0, len(data["history"])):
-                    if (data["history"][i]["name"] == name and data["history"][i]["category1"] == category1 and
-                    data["history"][i]["category2"] == category2 and data["history"][i]["money"] == money and 
-                    data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
-                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type and 
-                    data["history"][i]["moneytype"] == moneytype):
-                        
+                    print(data["history"][i])
+                    if (data["history"][i]["tran_id"] == tran_id):
+                    
                         data["history"][i] = {
+                            "tran_id": tran_id,
                             "name": new_name,
                             "category1": new_category1,
                             "category2": new_category2,
@@ -416,19 +417,13 @@ class MongoDB:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
         
-    def delete_transaction (self, username, day, month, year, 
-                            name, category1, category2, money, 
-                            hour, minute, second, _type, moneytype):
+    def delete_transaction (self, username, day, month, year, tran_id):
         try: 
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             print(data)
             if data:
                 for i in range(len(data["history"]) - 1, -1, -1):
-                    if (data["history"][i]["name"] == name and data["history"][i]["category1"] == category1 and
-                    data["history"][i]["category2"] == category2 and data["history"][i]["money"] == money and 
-                    data["history"][i]["hour"] == hour and data["history"][i]["minute"] == minute and
-                    data["history"][i]["second"] == second and data["history"][i]["type"] == _type and
-                    data["history"][i]["moneytype"] == moneytype):
+                    if (data["history"][i]["tran_id"] == tran_id):
                         
                         data["history"].pop(i)
 
@@ -441,4 +436,50 @@ class MongoDB:
         except Exception as e:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
+        
+# goals 
+    def add_goal(self, username, day, month, year, name, money, time, unit, img):
+        try: 
+            data = self.goals_collection.find_one({"username": username, "day": day, "month": month, "year": year, "name": name, "money": money})
+            if(data): 
+                return "existed"
+            else:
+                uuid = str(uuid4())
+                self.goals_collection.insert_one({
+                    '_id': uuid,
+                    'username': username,
+                    'day': day,
+                    'month': month,
+                    'year': year,
+                    'name': name,
+                    'money': money,
+                    'time': time,
+                    'unit': unit,
+                    'progress': 0,
+                    'img': img,
+                    'history': []
+                })
+                return self.goals_collection.find_one({"username": username, "day": day, "month": month, "year": year, "name": name, "money": money})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)       
+
+    def delete_goal(self, username, day, month, year, name, money, time, unit, img):
+        try: 
+            self.goals_collection.delete_one({
+                    'username': username,
+                    'day': day,
+                    'month': month,
+                    'year': year,
+                    'name': name,
+                    'money': money,
+                    'time': time,
+                    'unit': unit,
+                    'img': img,
+                })
+            
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)  
+        
         
