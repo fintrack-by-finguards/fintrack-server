@@ -23,6 +23,19 @@ async def create_user(request):
             'status': 'false',
         })
     
+@user_blueprint.route('/update', methods={'POST'})
+async def change_user_info(request):
+    try :
+        data = _db.change_user_info(request.json['username'], request.json['name'], request.json['birthday'], request.json['job'], request.json['university'], request.json['income'], request.json['activate'])
+        return json({
+            'status': 'success',
+            'data': data
+        })
+    except:
+        return json({
+            'status': 'false',
+        })
+    
 @user_blueprint.route('/getOne', methods={'POST'})
 async def get_user(request):
     try :
@@ -37,31 +50,3 @@ async def get_user(request):
         })
     
 
-
-# @links_blueprint.route('/get-all-customed-link', methods={'GET'})
-# async def get_all_customed_link(request):
-#     data = _db.get_all_customed_link(request.args.get('url'))
-#     nonce = _db.find_nonce_link(request.args.get('url'))
-#     return json({
-#         'nonce': nonce,
-#         'links': list(data)
-#     })
-
-
-# @links_blueprint.route('/get-origin-url', methods={'GET'})
-# async def get_origin_url(request):
-#     data = _db.get_origin_url(request.args.get('link'))
-#     return json(data)
-
-
-# @links_blueprint.route('/test', methods={'GET'})
-# async def test(request):
-#     _db.views_count()
-#     return json({
-#         'message': 'success',
-#     })
-
-# @links_blueprint.route('/get-view-logs', methods={'GET'})
-# async def get_view_logs(request):
-#     data = _db.get_views_log(request.args.get('url'))
-#     return json(data)

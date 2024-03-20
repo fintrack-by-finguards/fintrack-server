@@ -11,6 +11,21 @@ async def base(request):
     return json({
         "message": "Assets"
     })
+
+@assets_blueprint.route('/create', methods={'POST'})
+async def create_user_assets(request):
+    try :
+        data = _db.create_user_assets(request.json['username'], request.json['day'], request.json['month'],
+                                   request.json['year'], request.json['assets'], request.json['debt'])
+        return json({
+            'status': 'success',
+            'data': data
+        })
+    except:
+        return json({
+            'status': 'false',
+        })
+    
     
 
 @assets_blueprint.route('/update', methods={'POST'})

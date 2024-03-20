@@ -72,12 +72,37 @@ class MongoDB:
                 'birthday': birthday,
                 'job': job,
                 'university': university,
+                "income": 0,
+                'activate': False
             })
             return json({"status": "success", "data": self.user_collection.find_one({"username": username})})
+        
+    def change_user_info(self, username, name, birthday, job, university, income, activate):
+        try:
+            data = self.user_collection.find_one({"username": username})
+            print(data)
+            if(not data): 
+                return "Doesn't exist"
+            else:
+                self.user_collection.update_one({"username": username}
+                                                    , {"$set": { "name": name,
+                                                                "birthday": birthday, 
+                                                                    "job": job,
+                                                                    "university": university,
+                                                                    "income": income,
+                                                                    "activate": activate }})
+            return self.user_collection.find_one({"username": username})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        
+
     
     def get_user(self, username):
         data = self.user_collection.find_one({"username": username})
         return data
+    
+
     
     def create_feedback(self, img_url, username, point, data, comment):
         uuid = str(uuid4())
@@ -117,6 +142,24 @@ class MongoDB:
         data = self.assets_collection.find_one({"username": username})
         return data
     
+    def create_user_assets(self, username, day, month, year, assets, debt):
+        try: 
+            uuid = str(uuid4())
+            self.assets_collection.insert_one({
+                    '_id': uuid,
+                    'username': username,
+                    "day": day, 
+                    "month": month, 
+                    "year": year,
+                    "assets": assets,
+                    "debt": debt,
+                    "history": []
+                })
+            return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        
     def get_user_assets_specific(self, username, day, month, year):
         try: 
             data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
@@ -124,37 +167,26 @@ class MongoDB:
                 return data
             else: 
                 uuid = str(uuid4())
-                previous_day = get_previous_day({"day": day, "month": month, "year": year})
-                print(previous_day)
-                previous_day_data = self.assets_collection.find_one({"username": username, "day": previous_day["day"], 
+                first_previous_day = get_previous_day({"day": day, "month": month, "year": year})
+                previous_day_data = self.assets_collection.find_one({"username": username, "day": first_previous_day["day"], 
+                                                                     "month": first_previous_day["month"], "year": first_previous_day["year"]})
+                while(not previous_day_data):
+                      previous_day = get_previous_day({"day": day, "month": month, "year": year})
+                      previous_day_data = self.assets_collection.find_one({"username": username, "day": previous_day["day"], 
                                                                      "month": previous_day["month"], "year": previous_day["year"]})
-                if previous_day_data:
-                    self.assets_collection.insert_one({
-                        '_id': uuid,
-                        'username': username,
-                        "day": day, 
-                        "month": month, 
-                        "year": year,
-                        "assets": previous_day_data["assets"],
-                        "debt": previous_day_data["debt"],
-                        "history": []
-                    })
-
-                    return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
-                    
-                else: 
-                    self.assets_collection.insert_one({
-                        '_id': uuid,
-                        'username': username,
-                        "day": day, 
-                        "month": month, 
-                        "year": year,
-                        "assets": [0, 0, 0, 0, 0],
-                        "debt": [0, 0, 0, 0],
-                        "history": []
-                    })
-                    return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
                 
+                self.assets_collection.insert_one({
+                    '_id': uuid,
+                    'username': username,
+                    "day": day, 
+                    "month": month, 
+                    "year": year,
+                    "assets": previous_day_data["assets"],
+                    "debt": previous_day_data["debt"],
+                    "history": []
+                })
+
+                return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
                 
         except Exception as e:
             print(f"An error occurred: {e}")
@@ -391,7 +423,6 @@ class MongoDB:
             data = self.transactions_collection.find_one({"username": username, "day": day, "month": month, "year": year})
             if data:
                 for i in range(0, len(data["history"])):
-                    print(data["history"][i])
                     if (data["history"][i]["tran_id"] == tran_id):
                     
                         data["history"][i] = {
@@ -437,7 +468,21 @@ class MongoDB:
             return None  # If there's an error, return "false" (as per your code)
         
 # goals 
-    def add_goal(self, username, day, month, year, name, money, time, unit, img):
+    def get_goal(self, username): 
+        try: 
+            data = self.goals_collection.find({"username": username})
+            if data:
+                res = []
+                for docs in data:
+                    res.append(docs)
+                return res
+            else:
+                return None
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)     
+        
+    def add_goal(self, username, day, month, year, name, money, time, unit, img, _type):
         try: 
             data = self.goals_collection.find_one({"username": username, "day": day, "month": month, "year": year, "name": name, "money": money})
             if(data): 
@@ -456,6 +501,7 @@ class MongoDB:
                     'unit': unit,
                     'progress': 0,
                     'img': img,
+                    'type': _type,
                     'history': []
                 })
                 return self.goals_collection.find_one({"username": username, "day": day, "month": month, "year": year, "name": name, "money": money})
@@ -463,22 +509,88 @@ class MongoDB:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)       
 
-    def delete_goal(self, username, day, month, year, name, money, time, unit, img):
+    def delete_goal(self, username, goal_id):
         try: 
             self.goals_collection.delete_one({
                     'username': username,
-                    'day': day,
-                    'month': month,
-                    'year': year,
-                    'name': name,
-                    'money': money,
-                    'time': time,
-                    'unit': unit,
-                    'img': img,
+                    '_id': goal_id
                 })
             
         except Exception as e:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)  
+
+    def update_goal(self, username, goal_id, new_day, new_month, new_year,
+                    new_name, new_money, new_time, new_unit, new_img, new_type):
+        try: 
+
+            
+            self.goals_collection.update_one({"_id": goal_id, "username": username}
+                                                  , {"$set": { 
+                                                        'day': new_day,
+                                                        'month': new_month,
+                                                        'year': new_year,
+                                                        'name': new_name,
+                                                        'money': new_money,
+                                                        'time': new_time,
+                                                        'unit': new_unit,
+                                                        'img': new_img,
+                                                        'type': new_type,
+                                                   }})
+            return self.goals_collection.find_one({"username": username, "_id": goal_id})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None 
+    
+    def add_goal_history(self, username, goal_id, tran_id, day, month, year, name, 
+                    money, hour, minute, second, moneytype):
+        try: 
+            data = self.goals_collection.find_one({"username": username, "_id": goal_id})
+            tran_uuid = str(uuid4())
+            data["progress"] += money
+            data["history"].append({
+                "tran_id": tran_uuid,
+                "parent_id": tran_id,
+                "name": name,
+                "day": day,
+                "month": month,
+                "year": year,
+                "money": money,
+                "hour": hour,
+                "minute": minute,
+                "second": second,
+                "moneytype": moneytype
+            })
+            self.goals_collection.update_one({"username": username, "_id": goal_id}
+                                                  , {"$set": { "history": data["history"], "progress": data["progress"] }})
+                
+
+            return self.goals_collection.find_one({"username": username, "_id": goal_id})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
         
-        
+    def delete_goal_transaction (self, username, tran_id):
+        try: 
+            data = self.goals_collection.find({"username": username})
+            goal_id = ""
+            if data:
+                for docs in data:
+                    for i in range(len(docs["history"]) - 1, -1, -1):
+                        if (docs["history"][i]["parent_id"] == tran_id):
+
+                            docs["progress"] -= docs["history"][i]["money"]
+                            docs["history"].pop(i)  
+                            goal_id = docs.get('_id')
+
+                        self.goals_collection.update_one({"username": username, "_id": goal_id}
+                                                    , {"$set": { "history": docs["history"], "progress": docs["progress"] }})
+                        
+            return self.goals_collection.find_one({"username": username, "_id": goal_id})
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+    
