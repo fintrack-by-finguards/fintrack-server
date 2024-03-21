@@ -38,7 +38,8 @@ def get_previous_day(data):
 
 class MongoDB:
     def __init__(self, connection_url=None):
-        uri = "mongodb+srv://doanthang2001:05092001Thang@fintrack01.bdf1t8u.mongodb.net"
+        # uri = "mongodb+srv://doanthang2001:05092001Thang@fintrack01.bdf1t8u.mongodb.net"
+        uri="mongodb://fintrackadmin:admin@95.111.229.214:27017"
         # Create a new client and connect to the server
         self.client = MongoClient(uri)
 
@@ -72,30 +73,23 @@ class MongoDB:
                 'birthday': birthday,
                 'job': job,
                 'university': university,
-                "income": 0,
+                'income': 0,
                 'activate': False
             })
             return json({"status": "success", "data": self.user_collection.find_one({"username": username})})
         
     def change_user_info(self, username, name, birthday, job, university, income, activate):
-        try:
-            data = self.user_collection.find_one({"username": username})
-            print(data)
-            if(not data): 
-                return "Doesn't exist"
-            else:
-                self.user_collection.update_one({"username": username}
-                                                    , {"$set": { "name": name,
-                                                                "birthday": birthday, 
-                                                                    "job": job,
-                                                                    "university": university,
-                                                                    "income": income,
-                                                                    "activate": activate }})
-            return self.user_collection.find_one({"username": username})
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            return None  # If there's an error, return "false" (as per your code)
-        
+        data = self.user_collection.find_one({"username": username})
+        if(not data): 
+            return "Doesn't exist"
+        else:
+            self.user_collection.update_one({"username": username}
+                                                  , {"$set": { "name": name,
+                                                               "birthday": birthday, 
+                                                                "job": job,
+                                                                "university": university,
+                                                                "income": income,
+                                                                "activate": activate }})
 
     
     def get_user(self, username):
@@ -146,20 +140,22 @@ class MongoDB:
         try: 
             uuid = str(uuid4())
             self.assets_collection.insert_one({
-                    '_id': uuid,
-                    'username': username,
-                    "day": day, 
-                    "month": month, 
-                    "year": year,
-                    "assets": assets,
-                    "debt": debt,
-                    "history": []
-                })
+                '_id': uuid,
+               'username': username,
+                "day": day, 
+                "month": month, 
+                "year": year,
+                "assets": assets,
+                "debt": debt,
+                "history": []
+            })
             return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
+
         except Exception as e:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
         
+    
     def get_user_assets_specific(self, username, day, month, year):
         try: 
             data = self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
@@ -167,24 +163,36 @@ class MongoDB:
                 return data
             else: 
                 uuid = str(uuid4())
-                first_previous_day = get_previous_day({"day": day, "month": month, "year": year})
-                previous_day_data = self.assets_collection.find_one({"username": username, "day": first_previous_day["day"], 
-                                                                     "month": first_previous_day["month"], "year": first_previous_day["year"]})
-                while(not previous_day_data):
-                      previous_day = get_previous_day({"day": day, "month": month, "year": year})
-                      previous_day_data = self.assets_collection.find_one({"username": username, "day": previous_day["day"], 
+                check = 0
+                for i in range (0, 3):
+                    previous_day = get_previous_day({"day": day, "month": month, "year": year})
+                    previous_day_data = self.assets_collection.find_one({"username": username, "day": previous_day["day"], 
                                                                      "month": previous_day["month"], "year": previous_day["year"]})
+                    if previous_day_data:
+                        self.assets_collection.insert_one({
+                            '_id': uuid,
+                            'username': username,
+                            "day": day, 
+                            "month": month, 
+                            "year": year,
+                            "assets": previous_day_data["assets"],
+                            "debt": previous_day_data["debt"],
+                            "history": []
+                        })
+                        check = 1
+                        break
                 
-                self.assets_collection.insert_one({
-                    '_id': uuid,
-                    'username': username,
-                    "day": day, 
-                    "month": month, 
-                    "year": year,
-                    "assets": previous_day_data["assets"],
-                    "debt": previous_day_data["debt"],
-                    "history": []
-                })
+                if check == 0:
+                    self.assets_collection.insert_one({
+                            '_id': uuid,
+                            'username': username,
+                            "day": day, 
+                            "month": month, 
+                            "year": year,
+                            "assets": [0,0,0,0,0],
+                            "debt": [0,0,0,0],
+                            "history": []
+                        })
 
                 return self.assets_collection.find_one({"username": username, "day": day, "month": month, "year": year})
                 
