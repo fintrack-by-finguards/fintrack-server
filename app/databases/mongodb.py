@@ -601,4 +601,23 @@ class MongoDB:
         except Exception as e:
             print(f"An error occurred: {e}")
             return None  # If there's an error, return "false" (as per your code)
-    
+        
+    def get_info (self):
+        try: 
+            goal_number = self.goals_collection.count_documents({})
+            user_number = self.user_collection.count_documents({})
+            transaction_number = 0
+            data = self.transactions_collection.find()
+            for docs in data:
+                transaction_number += len(docs["history"])
+
+            return {
+                "user": user_number,
+                "goal": goal_number,
+                "transaction":transaction_number
+            }
+                
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return None  # If there's an error, return "false" (as per your code)
+        

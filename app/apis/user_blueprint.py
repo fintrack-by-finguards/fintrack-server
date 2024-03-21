@@ -49,4 +49,18 @@ async def get_user(request):
             'status': 'false',
         })
     
+@user_blueprint.route('/info', methods={'POST'})
+async def get_info(request):
+    try :
+        data = _db.get_info()
+        return json({
+            'status': 'success',
+            'data': data
+        })
+    except:
+        return json({
+            'status': 'false',
+        })
+    
+    
 
