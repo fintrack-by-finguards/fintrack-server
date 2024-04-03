@@ -59,7 +59,7 @@ class MongoDB:
         self.goals_collection = self.db[MongoDBConfig.GOALS_COLLECTION]
         # self.fb = FireBase()
         
-    def create_user(self, username, password, name, birthday, job, university):
+    def create_user(self, username, password, name, birthday, createday, job, university):
         data = self.user_collection.find_one({"username": username})
         if(data): 
             return "existed"
@@ -71,6 +71,7 @@ class MongoDB:
                 'password': password,
                 'name': name,
                 'birthday': birthday,
+                'createday': createday,
                 'job': job,
                 'university': university,
                 'income': 0,
@@ -78,7 +79,7 @@ class MongoDB:
             })
             return json({"status": "success", "data": self.user_collection.find_one({"username": username})})
         
-    def change_user_info(self, username, name, birthday, job, university, income, activate):
+    def change_user_info(self, username, name, birthday, createday, job, university, income, activate):
         data = self.user_collection.find_one({"username": username})
         if(not data): 
             return "Doesn't exist"
@@ -86,6 +87,7 @@ class MongoDB:
             self.user_collection.update_one({"username": username}
                                                   , {"$set": { "name": name,
                                                                "birthday": birthday, 
+                                                               "createday": createday,
                                                                 "job": job,
                                                                 "university": university,
                                                                 "income": income,

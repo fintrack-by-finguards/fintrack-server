@@ -16,7 +16,7 @@ async def base(request):
 @user_blueprint.route('/create', methods={'POST'})
 async def create_user(request):
     try :
-        res = _db.create_user(request.json['username'], request.json['password'], request.json['name'], request.json['birthday'], request.json['job'], request.json['university'])
+        res = _db.create_user(request.json['username'], request.json['password'], request.json['name'], request.json['birthday'],request.json['createday'], request.json['job'], request.json['university'])
         return res
     except:
         return json({
@@ -26,7 +26,7 @@ async def create_user(request):
 @user_blueprint.route('/update', methods={'POST'})
 async def change_user_info(request):
     try :
-        data = _db.change_user_info(request.json['username'], request.json['name'], request.json['birthday'], request.json['job'], request.json['university'], request.json['income'], request.json['activate'])
+        data = _db.change_user_info(request.json['username'], request.json['name'], request.json['birthday'],request.json['createday'], request.json['job'], request.json['university'], request.json['income'], request.json['activate'])
         return json({
             'status': 'success',
             'data': data
