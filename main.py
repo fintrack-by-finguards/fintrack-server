@@ -20,5 +20,4 @@ if __name__ == "__main__":
     debug=True,
     access_log=False,
     auto_reload=True,
-    ssl="/etc/letsencrypt/live/fintrack.com.vn"
     )
