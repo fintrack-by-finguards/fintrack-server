@@ -10,14 +10,6 @@ app = Sanic("FinTrack")
 CORS(app)
 app.blueprint(api)
 
-ssl = [
-    None,  # No fallback if names do not match!
-    {
-        "cert": "/etc/letsencrypt/live/fintrack.com.vn/fullchain.pem",
-        "key": "/etc/letsencrypt/live/fintrack.com.vn/privkey.pem",
-    }
-]
-
 @app.get("/")
 async def hello_world(request):
     return text("Customed Link")
@@ -28,5 +20,5 @@ if __name__ == "__main__":
     debug=True,
     access_log=False,
     auto_reload=True,
-    ssl=ssl
+    ssl="/etc/letsencrypt/live/fintrack.com.vn"
     )
